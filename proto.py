@@ -3,11 +3,13 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error
+import matplotlib.pyplot as plt
 
 AB_file = ("average_stats_per_run_activity_test.csv")
 
 data_AB = pd.read_csv(AB_file)
 data_AB = data_AB.drop(columns=["activity_name"])
+data_AB = data_AB.fillna(150)
 
 # Diviser les données en train/test
 X = data_AB[["total_distance_km", "total_elevation_gain", "average_heart_rate"]]
@@ -18,8 +20,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 model = LinearRegression()
 model.fit(X_train, y_train)
 
-# Évaluer le modèle
-y_pred = model.predict(X_test)
 # Coefficients ajustés
 beta_0 = model.intercept_
 beta_1, beta_2, beta_3 = model.coef_
@@ -29,11 +29,37 @@ print(f"Beta_1 (distance) : {beta_1}")
 print(f"Beta_2 (dénivelé) : {beta_2}")
 print(f"Beta_3 (rythme cardiaque) : {beta_3}")
 
-# # Entrées utilisateur
-# distance_input = float(input("Entrez la distance (en km) : "))
-# denivele_input = float(input("Entrez le dénivelé positif cumulé (en m) : "))
-# historique_input = float(input("Entrez votre temps moyen au km (en minutes) : "))
+# Relation entre le temps et distance/d+/FC
+for col in X.columns:
+    plt.scatter(X[col], y)
+    plt.title(f"{col} vs Temps total")
+    plt.xlabel(col)
+    plt.ylabel("Total Time (s)")
+    plt.show()
 
-# # Prédiction
-# temps_prevu = model.predict([[distance_input, denivele_input, historique_input]])
-# print(f"Temps estimé pour la course : {temps_prevu[0]:.2f} minutes")
+def temps_estime(distance_km, denivele_m, rythme_cardiaque_bpm, beta_0, beta_1, beta_2, beta_3):
+    """
+    Calcule le temps estimé d'une course en secondes à partir des caractéristiques d'entrée et des coefficients.
+    
+    Parameters:
+        distance_km (float): Distance de la course en kilomètres.
+        denivele_m (float): Dénivelé total en mètres.
+        rythme_cardiaque_bpm (float): Rythme cardiaque moyen en bpm.
+        beta_0 (float): Coefficient d'interception.
+        beta_1 (float): Coefficient pour la distance.
+        beta_2 (float): Coefficient pour le dénivelé.
+        beta_3 (float): Coefficient pour le rythme cardiaque.
+
+    Returns:
+        float: Temps estimé en secondes.
+    """
+    return beta_0 + beta_1 * distance_km + beta_2 * denivele_m + beta_3 * rythme_cardiaque_bpm
+
+# Nouvelle entrée (par exemple, une course fictive)
+nouvelle_distance = 27  # km
+nouveau_denivele = 1170  # m
+nouveau_rythme_cardiaque = 170 # bpm
+
+# Calcul du temps estimé
+temps = temps_estime(nouvelle_distance, nouveau_denivele, nouveau_rythme_cardiaque, beta_0, beta_1, beta_2, beta_3)
+print(f"Temps estimé : {temps / 3600:.2f} heure(s)")  # Conversion en minutes
