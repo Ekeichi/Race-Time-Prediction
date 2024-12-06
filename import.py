@@ -3,14 +3,14 @@ import json
 import csv
 
 # Votre token d'accès
-access_token = "03b391e99bdcf19d9a424ea07f2761528db0997a"
+access_token = "5e45d9eeae8ff776a9868c88b45dbb28123b08df"
 
 # URL pour récupérer la liste des activités
 url_activities = "https://www.strava.com/api/v3/athlete/activities"
 headers = {"Authorization": f"Bearer {access_token}"}
 
 # Nombre d'activités par page (maximum 200)
-per_page = 1
+per_page = 200
 # Définir le numéro de la première page
 page = 1
 
@@ -74,13 +74,13 @@ with open(output_file, mode="w", newline="", encoding="utf-8") as file:
                                 "activity_name": activity_name,
                                 "average_heart_rate": average_heart_rate,
                                 "total_time_seconds": total_time_seconds,
-                                "total_distance_km": total_distance_km
+                                "total_distance_km": total_distance_km,
+                                "total_elevation_gain" : total_elevation_gain
                             })
 
             # Passer à la page suivante
             print(f"Page {page} traitée.")
-            # page += 1
-            break
+            page += 1
         else:
             print(f"Erreur lors de la récupération des activités : {response.status_code}")
             print(response.text)
