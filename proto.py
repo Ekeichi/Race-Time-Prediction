@@ -55,11 +55,11 @@ def temps_estime(distance_km, denivele_m, rythme_cardiaque_bpm, beta_0, beta_1, 
     """
     return beta_0 + beta_1 * distance_km + beta_2 * denivele_m + beta_3 * rythme_cardiaque_bpm
 
-# Nouvelle entrée (par exemple, une course fictive)
+# Nouvelle entrée
 nouvelle_distance = 27  # km
 nouveau_denivele = 1170  # m
 nouveau_rythme_cardiaque = 170 # bpm
 
 # Calcul du temps estimé
 temps = temps_estime(nouvelle_distance, nouveau_denivele, nouveau_rythme_cardiaque, beta_0, beta_1, beta_2, beta_3)
-print(f"Temps estimé : {temps / 3600:.2f} heure(s)")  # Conversion en minutes
+print(f"Temps estimé : {temps / 3600:.2f} heure(s)")  # Conversion en heure
