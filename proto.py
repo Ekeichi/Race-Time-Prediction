@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error
 import matplotlib.pyplot as plt
 
@@ -56,10 +57,23 @@ def temps_estime(distance_km, denivele_m, rythme_cardiaque_bpm, beta_0, beta_1, 
     return beta_0 + beta_1 * distance_km + beta_2 * denivele_m + beta_3 * rythme_cardiaque_bpm
 
 # Nouvelle entrée
-nouvelle_distance = 27  # km
-nouveau_denivele = 1170  # m
-nouveau_rythme_cardiaque = 170 # bpm
+nouvelle_distance = 17  # km
+nouveau_denivele = 725  # m
+nouveau_rythme_cardiaque = 152 # bpm
 
 # Calcul du temps estimé
 temps = temps_estime(nouvelle_distance, nouveau_denivele, nouveau_rythme_cardiaque, beta_0, beta_1, beta_2, beta_3)
 print(f"Temps estimé : {temps / 3600:.2f} heure(s)")  # Conversion en heure
+
+
+import seaborn as sns
+
+corr = data_AB.corr()
+sns.heatmap(corr, annot=True, cmap='coolwarm')
+plt.title("Matrice de corrélation")
+plt.show()
+
+sns.histplot(data_AB["total_time_seconds"], bins=30, kde=True)
+plt.title("Distribution des temps de course")
+plt.xlabel("Temps (secondes)")
+plt.show()
