@@ -31,7 +31,7 @@ class StravaDataExtractor:
            # Métriques physiologiques
            "average_heart_rate", 
            "max_heart_rate", 
-           "relative_effort",
+           "suffer_score",
            "heart_rate_zone1_time",
            "heart_rate_zone2_time", 
            "heart_rate_zone3_time",
@@ -159,7 +159,7 @@ class StravaDataExtractor:
            # Métriques physiologiques
            "average_heart_rate": activity_details.get("average_heartrate", "N/A"),
            "max_heart_rate": activity_details.get("max_heartrate", "N/A"),
-           "relative_effort": activity_details.get("relative_effort", "N/A"),
+           "suffer_score": activity_details.get("suffer_score", "N/A"),
            # Les zones de fréquence cardiaque nécessitent un traitement spécifique
            "heart_rate_zone1_time": activity_details.get("zones", {}).get("zone1_time", "N/A") if "zones" in activity_details else "N/A",
            "heart_rate_zone2_time": activity_details.get("zones", {}).get("zone2_time", "N/A") if "zones" in activity_details else "N/A",
