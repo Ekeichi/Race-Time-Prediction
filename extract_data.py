@@ -186,15 +186,11 @@ class StravaDataExtractor:
            "end_altitude": activity_details.get("end_altitude", "N/A")
        }
 
-def main():
-   # IMPORTANT : Remplacez par votre propre token d'accès
-   ACCESS_TOKEN = "749107f96bb1d165f7739a0687b67f60717ccc34"
-   
-   # Création de l'extracteur
-   extractor = StravaDataExtractor(ACCESS_TOKEN)
-   
-   # Exportation de toutes les activités de course en CSV
-   extractor.get_all_run_activities(output_file="strava_run_activities_comprehensive.csv")
 
-if __name__ == "__main__":
-   main()
+ACCESS_TOKEN = "749107f96bb1d165f7739a0687b67f60717ccc34"
+   
+# Création de l'extracteur
+extractor = StravaDataExtractor(ACCESS_TOKEN)
+   
+# Exportation de toutes les activités de course en CSV
+extractor.get_all_run_activities(output_file="strava_run_activities_comprehensive.csv")
