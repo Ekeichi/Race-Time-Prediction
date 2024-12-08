@@ -23,38 +23,19 @@ class StravaDataExtractor:
            "moving_time_seconds",
            "average_speed_km_h", 
            "max_speed_km_h", 
-           "calories",
            "total_elevation_gain", 
-           "total_elevation_loss",
-           "average_grade",
            
            # Métriques physiologiques
            "average_heart_rate", 
            "max_heart_rate", 
            "suffer_score",
-           "heart_rate_zone1_time",
-           "heart_rate_zone2_time", 
-           "heart_rate_zone3_time",
-           "heart_rate_zone4_time",
-           "heart_rate_zone5_time",
            
            # Métriques de puissance (si disponibles)
            "average_watts",
            "max_watts",
-           "normalized_power",
            
            # Métriques spécifiques course à pied
-           "total_steps",
-           "average_stride_length",
            "average_cadence",
-           
-           # Données géographiques
-           "start_latitude", 
-           "start_longitude", 
-           "start_altitude",
-           "end_latitude", 
-           "end_longitude", 
-           "end_altitude"
        ]
        
        # Ouvrir le fichier CSV
@@ -151,39 +132,19 @@ class StravaDataExtractor:
            "moving_time_seconds": activity.get("moving_time", 0),
            "average_speed_km_h": round(activity.get("average_speed", 0) * 3.6, 2),
            "max_speed_km_h": round(activity.get("max_speed", 0) * 3.6, 2),
-           "calories": activity.get("calories", "N/A"),
            "total_elevation_gain": activity.get("total_elevation_gain", 0),
-           "total_elevation_loss": activity_details.get("total_elevation_loss", 0),
-           "average_grade": activity_details.get("average_grade", "N/A"),
            
            # Métriques physiologiques
            "average_heart_rate": activity_details.get("average_heartrate", "N/A"),
            "max_heart_rate": activity_details.get("max_heartrate", "N/A"),
            "suffer_score": activity_details.get("suffer_score", "N/A"),
-           # Les zones de fréquence cardiaque nécessitent un traitement spécifique
-           "heart_rate_zone1_time": activity_details.get("zones", {}).get("zone1_time", "N/A") if "zones" in activity_details else "N/A",
-           "heart_rate_zone2_time": activity_details.get("zones", {}).get("zone2_time", "N/A") if "zones" in activity_details else "N/A",
-           "heart_rate_zone3_time": activity_details.get("zones", {}).get("zone3_time", "N/A") if "zones" in activity_details else "N/A",
-           "heart_rate_zone4_time": activity_details.get("zones", {}).get("zone4_time", "N/A") if "zones" in activity_details else "N/A",
-           "heart_rate_zone5_time": activity_details.get("zones", {}).get("zone5_time", "N/A") if "zones" in activity_details else "N/A",
            
            # Métriques de puissance
            "average_watts": activity_details.get("average_watts", "N/A"),
            "max_watts": activity_details.get("max_watts", "N/A"),
-           "normalized_power": activity_details.get("normalized_power", "N/A"),
            
            # Métriques spécifiques course à pied
-           "total_steps": activity_details.get("total_steps", "N/A"),
-           "average_stride_length": activity_details.get("average_stride_length", "N/A"),
            "average_cadence": activity.get("average_cadence", "N/A"),
-           
-           # Données géographiques
-           "start_latitude": activity.get("start_latitude", "N/A"),
-           "start_longitude": activity.get("start_longitude", "N/A"),
-           "start_altitude": activity_details.get("start_altitude", "N/A"),
-           "end_latitude": activity_details.get("end_latitude", "N/A"),
-           "end_longitude": activity_details.get("end_longitude", "N/A"),
-           "end_altitude": activity_details.get("end_altitude", "N/A")
        }
 
 
