@@ -8,6 +8,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import datetime as dt
 
+
 data = pd.read_csv('activities_with_details.csv')
 date = data['start_date_local']
 data = data.drop(columns=['activity_id', 'start_date_local', 'suffer_score'])
@@ -73,41 +74,33 @@ for i in range(len(df_full)):
 
 df_full["Charge_chronique"] = charge_chronique
 
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 
-# Créer un tableau de visualisation
-plt.figure(figsize=(15, 6))
-plt.plot(df_full['date'], df_full['Charge_aigue'], label='Charge Aiguë (7 jours)', color='blue')
-plt.plot(df_full['date'], df_full['Charge_chronique'], label='Charge Chronique (28 jours)', color='red')
-plt.title('Évolution des Charges Aiguë et Chronique')
-plt.xlabel('Date')
-plt.ylabel('Charge d\'effort')
-plt.legend()
-plt.xticks(rotation=45)
-plt.tight_layout()
-plt.show()
+# # Créer un tableau de visualisation
+# plt.figure(figsize=(15, 6))
+# plt.plot(df_full['date'], df_full['Charge_aigue'], label='Charge Aiguë (7 jours)', color='blue')
+# plt.plot(df_full['date'], df_full['Charge_chronique'], label='Charge Chronique (28 jours)', color='red')
+# plt.title('Évolution des Charges Aiguë et Chronique')
+# plt.xlabel('Date')
+# plt.ylabel('Charge d\'effort')
+# plt.legend()
+# plt.xticks(rotation=45)
+# plt.tight_layout()
+# plt.show()
 
-# Tableau récapitulatif statistique
-stats = df_full[['Charge_aigue', 'Charge_chronique']].describe()
-print("\nRésumé statistique des charges :")
-print(stats)
-
-# Calcul du ratio Charge Aiguë / Charge Chronique
+# Calcul du ratio Charge Aiguë / Charge Chronique (ACWR)
 df_full['Ratio_AC'] = df_full['Charge_aigue'] / df_full['Charge_chronique']
-
-print("\nRésumé du ratio Charge Aiguë / Charge Chronique :")
-print(df_full['Ratio_AC'].describe())
 
 # Visualisation du ratio
 plt.figure(figsize=(15, 6))
-plt.plot(df_full['date'], df_full['Ratio_AC'], label='Ratio Charge Aiguë / Chronique', color='green')
-plt.title('Évolution du Ratio Charge Aiguë / Charge Chronique')
+plt.plot(df_full['date'], df_full['Ratio_AC'], label='ACWR', color='green')
+plt.title('Évolution du Ratio Charge Aiguë / Charge Chronique = ACWR')
 plt.xlabel('Date')
 plt.ylabel('Ratio')
-plt.axhline(y=1, color='r', linestyle='--')
+plt.axhline(y=1.5, color='r', linestyle='--', label='Limite ACWR (1.5)')
+plt.axhline(y=0.8, color='b', linestyle='--', label='Limite ACWR (0.8)')
 plt.legend()
 plt.xticks(rotation=45)
 plt.tight_layout()
 plt.show()
+
+
