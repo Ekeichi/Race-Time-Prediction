@@ -41,7 +41,7 @@ def define_zones(hr, hr_max):
         return 5
 
 # Calcul des temps passés dans chaque zone
-def HR_zone(access_token, activity_id, hr_max=185):
+def HR_zone(access_token, activity_id, hr_max=197):
     heartrate_data = get_activity_stream(activity_id, access_token)
     zones = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0}  # Temps en secondes dans chaque zone
     for hr in heartrate_data:
@@ -72,6 +72,7 @@ def get_all_activities_with_zones_and_suffer_score(access_token, per_page=30, ou
                 break
             for activity in data:
                 activity_id = activity.get("id")
+                start_date = activity.get("start_date_local", "N/A")
                 suffer_score = activity.get("suffer_score", "N/A")
                 
                 # Récupérer les zones de fréquence cardiaque
@@ -80,17 +81,19 @@ def get_all_activities_with_zones_and_suffer_score(access_token, per_page=30, ou
                 # Ajouter les données au tableau
                 activity_details = {
                     "activity_id": activity_id,
+                    "start_date_local": start_date,
                     "suffer_score": suffer_score,
                     **{f"zone_{z}": zones[z] for z in range(6)}  # Ajouter les temps dans chaque zone
                 }
                 activities_data.append(activity_details)
             page += 1
+
         else:
             print(f"Erreur lors de la récupération des activités : {response.status_code}")
             break
 
     # Exporter les données dans un fichier CSV
-    fieldnames = ["activity_id", "suffer_score"] + [f"zone_{z}" for z in range(6)]
+    fieldnames = ["activity_id", "start_date_local" ,"suffer_score"] + [f"zone_{z}" for z in range(6)]
     with open(output_csv, mode="w", newline="", encoding="utf-8") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
@@ -99,5 +102,5 @@ def get_all_activities_with_zones_and_suffer_score(access_token, per_page=30, ou
     print(f"Les activités avec les zones et Suffer Score ont été exportées dans le fichier {output_csv}")
 
 # Appel de la fonction principale
-ACCESS_TOKEN = "81f79a4e01543f94a4b4f3d18637b76c81a45235"
+ACCESS_TOKEN = "0791b409764a8fb27a5bd1401c4434be4e41bc2a"
 get_all_activities_with_zones_and_suffer_score(ACCESS_TOKEN)
