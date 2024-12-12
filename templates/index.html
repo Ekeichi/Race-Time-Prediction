@@ -4,36 +4,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tableau de Bord Strava</title>
+    <title>Dashboard Strava</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
 </head>
 
-<body>
-    <h1>Bienvenue sur votre tableau de bord Strava</h1>
+<body class="bg-light">
+    <div class="container mt-5">
+        <h1 class="text-center">Bienvenue sur votre Dashboard Strava</h1>
+        <p class="text-center text-muted">Connectez votre compte pour accéder à vos activités.</p>
 
-    <!-- Bouton pour rafraîchir les données -->
-    <button onclick="window.location.href='/refresh_data'">Rafraîchir les données Strava</button>
-
-    <h2>Activités récentes :</h2>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID Activité</th>
-                <th>Nom Activité</th>
-                <th>Suffer Score</th>
-                <th>Temps dans chaque zone</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for activity in activities %}
-            <tr>
-                <td>{{ activity.activity_id }}</td>
-                <td>{{ activity.name }}</td>
-                <td>{{ activity.suffer_score }}</td>
-                <td>{{ activity.time_in_zones }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        <div class="d-flex justify-content-center mt-4">
+            {% if authorized %}
+            <a href="/activities" class="btn btn-success btn-lg">Voir mes activités</a>
+            {% else %}
+            <a href="/authorize" class="btn btn-primary btn-lg">Connectez-vous avec Strava</a>
+            {% endif %}
+        </div>
+    </div>
 </body>
 
 </html>

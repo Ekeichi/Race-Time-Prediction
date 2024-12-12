@@ -2,7 +2,7 @@ import requests
 
 client_id = "141778"
 client_secret = "a334c280c5e9cd771d1a4659b58ce9e2cfe183f4"
-authorization_code = "1900fe64da5aa893ca9514fb059654dbf46eb4b4"
+authorization_code = "f61e38659b043cf6170a1923cede5ad3bdf93547"
 
 url = "https://www.strava.com/oauth/token"
 payload = {

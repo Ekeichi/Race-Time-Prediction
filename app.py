@@ -1,139 +1,189 @@
+from flask import Flask, redirect, request, session, url_for, render_template, jsonify, send_file
 import requests
-from flask import Flask, render_template, redirect, url_for
-import json
+import datetime
+import os
 import csv
+import json
 
 app = Flask(__name__)
+app.secret_key = "votre_secret_key"
 
-# Remplace par tes informations
+# Configuration Strava
 CLIENT_ID = '141778'
-CLIENT_SECRET = '"a334c280c5e9cd771d1a4659b58ce9e2cfe183f4'
-REFRESH_TOKEN = 'cb0ffee179bd51fa97a6ac0787fcfa467b7f806e'
-ACCESS_TOKEN = 'bbac68b38dda8e86d758e081b608b43633c21d2c'  # Token initial ou déjà rafraîchi
+CLIENT_SECRET = 'x'
+REDIRECT_URL = "http://localhost:5000/redirect"  # URL de redirection
+TOKEN_FILE = "strava_tokens.json"
+CSV_FILE = "activities_with_details.csv"
 
-# Fonction pour rafraîchir le token d'accès
-def refresh_token(refresh_token, client_id, client_secret):
-    url = 'https://www.strava.com/api/v3/oauth/token'
-    params = {
-        'client_id': client_id,
-        'client_secret': client_secret,
-        'grant_type': 'refresh_token',
-        'refresh_token': refresh_token
-    }
-    response = requests.post(url, data=params)
-    if response.status_code == 200:
-        return response.json()['access_token']
-    else:
-        print(f"Erreur de rafraîchissement du token: {response.status_code}")
+
+def save_tokens_to_file(tokens):
+    """Enregistre les tokens dans un fichier JSON."""
+    with open(TOKEN_FILE, "w") as f:
+        json.dump(tokens, f)
+
+
+def load_tokens_from_file():
+    """Charge les tokens depuis un fichier JSON."""
+    try:
+        with open(TOKEN_FILE, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
         return None
 
-# Fonction pour récupérer les activités Strava
-def get_activities(access_token):
-    url = "https://www.strava.com/api/v3/athlete/activities"
-    headers = {
-        "Authorization": f"Bearer {access_token}"
-    }
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        return response.json()
-    else:
-        print(f"Erreur lors de la récupération des activités: {response.status_code}")
-        return []
 
-# Fonction pour récupérer le stream des données de fréquence cardiaque
-def get_activity_stream(activity_id, access_token, stream_type="heartrate"):
-    url = f"https://www.strava.com/api/v3/activities/{activity_id}/streams"
-    headers = {
-        "Authorization": f"Bearer {access_token}"
-    }
+def refresh_access_token(refresh_token):
+    """Rafraîchit le token d'accès Strava."""
+    url = "https://www.strava.com/api/v3/oauth/token"
     params = {
-        "keys": stream_type,
-        "key_by_type": True
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET,
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token
     }
-    response = requests.get(url, headers=headers, params=params)
+    response = requests.post(url, params=params)
     if response.status_code == 200:
-        streams = response.json()
-        if stream_type in streams:
-            return streams[stream_type]["data"]
-        else:
-            print(f"Le stream '{stream_type}' n'est pas disponible pour cette activité.")
-            return None
+        tokens = response.json()
+        save_tokens_to_file(tokens)
+        return tokens
     else:
-        print(f"Erreur : {response.status_code} - {response.text}")
+        print(f"Erreur lors du rafraîchissement du token : {response.text}")
         return None
 
-# Fonction pour définir les zones en fonction de la fréquence cardiaque
-def define_zones(hr, hr_max):
-    if hr < 0.5 * hr_max:
-        return 0
-    elif hr < 0.65 * hr_max:
-        return 1
-    elif hr < 0.81 * hr_max:
-        return 2
-    elif hr < 0.89 * hr_max:
-        return 3
-    elif hr < 0.97 * hr_max:
-        return 4
-    else:
-        return 5
 
-# Fonction pour calculer les zones et le score d'effort
 def HR_zone(access_token, activity_id):
-    heartrate_data = get_activity_stream(activity_id, access_token, stream_type="heartrate")
-    zones = {0: [], 1: [], 2: [], 3: [], 4: [], 5: []}
-    for hr in heartrate_data:
-        if hr is None:  # Gestion des valeurs manquantes
-            continue
-        zone_point = define_zones(hr, hr_max=185)
-        zones[zone_point].append(hr)
-    return zones
-
-# Fonction pour récupérer et rafraîchir les données, puis les afficher
-@app.route('/refresh_data')
-def refresh_data():
-    global ACCESS_TOKEN
-
-    # Rafraîchir le token d'accès
-    ACCESS_TOKEN = refresh_token(REFRESH_TOKEN, CLIENT_ID, CLIENT_SECRET)
-    if ACCESS_TOKEN is None:
-        return "Erreur lors du rafraîchissement du token d'accès."
-
-    # Récupérer les activités avec le token rafraîchi
-    activities = get_activities(ACCESS_TOKEN)
+    """Récupère les zones de fréquence cardiaque pour une activité donnée."""
+    url = f"https://www.strava.com/api/v3/activities/{activity_id}/zones"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.get(url, headers=headers)
     
-    # Extraire les données nécessaires pour chaque activité
+    if response.status_code == 200:
+        zones = response.json()
+        hr_zones = {i: 0 for i in range(6)}  # Initialiser un dictionnaire avec 6 zones
+        for zone in zones:
+            if zone["type"] == "heartrate":
+                for i, hr_data in enumerate(zone.get("distribution_buckets", [])):
+                    hr_zones[i] = hr_data.get("time", 0)
+        return hr_zones
+    else:
+        print(f"Erreur lors de la récupération des zones HR pour l'activité {activity_id}")
+        return {i: 0 for i in range(6)}
+
+
+def get_all_activities_with_zones_and_suffer_score(access_token):
+    """Récupère les activités avec zones et Suffer Score, puis les sauvegarde en CSV."""
+    url = "https://www.strava.com/api/v3/athlete/activities"
+    headers = {"Authorization": f"Bearer {access_token}"}
     activities_data = []
-    for activity in activities:
-        activity_id = activity['id']
-        suffer_score = activity.get("suffer_score", "N/A")  # Valeur par défaut
-        zones = HR_zone(ACCESS_TOKEN, activity_id)
-        
-        # Calcul du temps passé dans chaque zone
-        time_in_zones = {zone: len(zones[zone]) for zone in zones}
+    page = 1
 
-        # Ajout des données à la liste
-        activities_data.append({
-            "activity_id": activity_id,
-            "name": activity['name'],
-            "suffer_score": suffer_score,
-            "time_in_zones": json.dumps(time_in_zones)  # Sérialisation du dictionnaire
-        })
-    
-    # Retourner à la page d'accueil avec les données mises à jour
-    return render_template('index.html', activities=activities_data)
+    while True:
+        params = {"page": page, "per_page": 30}
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            if not data:
+                break
+            for activity in data:
+                activity_id = activity.get("id")
+                start_date = activity.get("start_date_local", "N/A")
+                suffer_score = activity.get("suffer_score", "N/A")
 
-# Page d'accueil avec le bouton de rafraîchissement
-@app.route('/')
-def index():
-    return render_template('index.html', activities=[])
+                # Récupérer les zones de fréquence cardiaque
+                zones = HR_zone(access_token, activity_id)
 
-# Fonction pour exporter les activités dans un fichier CSV
-def export_to_csv(activities_data, filename="activities.csv"):
-    with open(filename, mode="w", newline="", encoding="utf-8") as file:
-        writer = csv.DictWriter(file, fieldnames=["activity_id", "name", "suffer_score", "time_in_zones"])
+                # Ajouter les données au tableau
+                activity_details = {
+                    "activity_id": activity_id,
+                    "start_date_local": start_date,
+                    "suffer_score": suffer_score,
+                    **{f"zone_{z}": zones[z] for z in range(6)}  # Ajouter les temps dans chaque zone
+                }
+                activities_data.append(activity_details)
+            page += 1
+        else:
+            print(f"Erreur lors de la récupération des activités : {response.status_code}")
+            break
+
+    # Exporter les données dans un fichier CSV
+    fieldnames = ["activity_id", "start_date_local", "suffer_score"] + [f"zone_{z}" for z in range(6)]
+    with open(CSV_FILE, mode="w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(activities_data)
 
-# Lancer l'application
-if __name__ == '__main__':
+    return activities_data
+
+
+@app.route("/")
+def index():
+    """Page d'accueil avec instructions."""
+    tokens = load_tokens_from_file()
+    if not tokens:
+        return redirect(url_for("authorize"))
+    
+    # Vérifier si le token est expiré
+    if tokens["expires_at"] < datetime.datetime.now().timestamp():
+        print("Token expiré, rafraîchissement en cours...")
+        tokens = refresh_access_token(tokens["refresh_token"])
+    
+    return render_template("index.html", authorized=True)
+
+
+@app.route("/authorize")
+def authorize():
+    """Redirige l'utilisateur pour autoriser l'application."""
+    url = f"https://www.strava.com/oauth/authorize?client_id={CLIENT_ID}&response_type=code&redirect_uri={REDIRECT_URL}&approval_prompt=force&scope=read_all,activity:read_all"
+    return redirect(url)
+
+
+@app.route("/redirect")
+def redirect_uri():
+    """Gère le callback après autorisation."""
+    code = request.args.get("code")
+    url = "https://www.strava.com/api/v3/oauth/token"
+    params = {
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET,
+        "code": code,
+        "grant_type": "authorization_code"
+    }
+    response = requests.post(url, params=params)
+    if response.status_code == 200:
+        tokens = response.json()
+        save_tokens_to_file(tokens)
+        return redirect(url_for("index"))
+    else:
+        return f"Erreur : {response.text}"
+
+
+@app.route("/activities")
+def activities():
+    """Affiche toutes les activités avec zones et Suffer Score."""
+    tokens = load_tokens_from_file()
+    if not tokens:
+        return redirect(url_for("authorize"))
+    
+    # Rafraîchir le token si nécessaire
+    if tokens["expires_at"] < datetime.datetime.now().timestamp():
+        tokens = refresh_access_token(tokens["refresh_token"])
+
+    # Récupérer les activités
+    activities_data = get_all_activities_with_zones_and_suffer_score(tokens["access_token"])
+    return render_template("activities.html", activities=activities_data)
+
+
+@app.route("/download")
+def download():
+    """Télécharge le fichier CSV avec les activités."""
+    if os.path.exists(CSV_FILE):
+        return send_file(CSV_FILE, as_attachment=True)
+    else:
+        return "Aucun fichier disponible pour le téléchargement."
+
+
+# Fichiers HTML dans le dossier templates (index.html, activities.html)
+# 1. `index.html` inclut un lien vers `/authorize` ou `/activities`.
+# 2. `activities.html` affiche les activités avec un lien pour télécharger le CSV.
+
+if __name__ == "__main__":
     app.run(debug=True)
