@@ -6,3 +6,6 @@ L'objectif ici est de rassembler une boîte à outils servant à aider l'utilisa
   Ensuite, j'ai pour objectif de concevoir une fonction permettant de donner l'état de fatigue de l'athlète après une sortie. On traduira cet état par un nombre, appelé score d'effort ou suffer_score. Ce score pourra ensuite être utilisé pour l'élaboration d'outils, notamment un indicateur simple et pertinent de fatigue ou de récupération. A l'avenir, on peut imaginer que ces valeurs seront utiles pour l'élaboration et l'ajustement en temps réel de plan d'entrainement. 
 
   L'objectif globale de cette démarche et de permettre à chaque athlète, novice ou expert, de s'appuyer sur des données interpretable facilement. Le ressenti ne sera pas le seul indicateur d'un état de fatigue ou de fraicheur. 
+
+
+![Figure_1](https://github.com/user-attachments/assets/7eefd1be-4d17-4abf-aefb-528dc6c7115a)
