@@ -10,7 +10,7 @@ app.secret_key = "votre_secret_key"
 
 # Configuration Strava
 CLIENT_ID = '141778'
-CLIENT_SECRET = 'x'
+CLIENT_SECRET = 'a334c280c5e9cd771d1a4659b58ce9e2cfe183f4'
 REDIRECT_URL = "http://localhost:5000/redirect"  # URL de redirection
 TOKEN_FILE = "strava_tokens.json"
 CSV_FILE = "activities_with_details.csv"
