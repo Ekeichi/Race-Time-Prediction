@@ -6,7 +6,8 @@ import xgboost as xgb
 from sklearn.metrics import mean_squared_error
 import seaborn as sns
 import matplotlib.pyplot as plt
-import datetime as dt
+from datetime import datetime as dt
+
 
 
 data = pd.read_csv('activities_with_details.csv')
@@ -15,8 +16,13 @@ data = data.drop(columns=['activity_id', 'start_date_local', 'suffer_score'])
 data = data.dropna()
 df = pd.DataFrame(data)
 
-# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
 zone_weights = {1: 1, 2: 2, 3: 3, 4: 4, 5: 5}
+
+#######################################
+####### Traitement des données ########
+#######################################
+
 # Calculer le score d'effort initial basé sur les pondérations
 def calculate_relative_effort(row, zone_weights):
     return sum((row[f'zone_{zone}']/60) * np.exp(weight) for zone, weight in zone_weights.items())
@@ -31,8 +37,10 @@ df['date'] = pd.to_datetime(df['date'])
 # Group by date and sum the initial_effort
 daily_effort = df.groupby(df['date'].dt.date)['relative_effort'].sum().reset_index()
 
+date_du_jour = dt.now().date()
+
 # Générer toutes les dates
-date_range = pd.date_range(start=df['date'].min().date(), end=df['date'].max().date())
+date_range = pd.date_range(start=df['date'].min().date(), end=date_du_jour)
 
 # Créer un DataFrame avec toutes les dates
 df_full = pd.DataFrame({'date': date_range})
@@ -46,9 +54,9 @@ df_full = df_full.merge(daily_effort, on='date', how='left')
 # Remplir les efforts manquants par 0
 df_full['relative_effort'] = df_full['relative_effort'].fillna(0)
 
-# # Trier dans l'ordre décroissant
-# df_full = df_full.sort_values('date', ascending=False).reset_index(drop=True)
-
+######################################################
+####### Calcul des charges aigue et chronique ########
+######################################################
 
 # Calcul de la charge aigue
 charge_aigue = []
@@ -74,35 +82,13 @@ for i in range(len(df_full)):
 
 df_full["Charge_chronique"] = charge_chronique
 
-
-# # Créer un tableau de visualisation
-# plt.figure(figsize=(15, 6))
-# plt.plot(df_full['date'], df_full['Charge_aigue'], label='Charge Aiguë (7 jours)', color='blue')
-# plt.plot(df_full['date'], df_full['Charge_chronique'], label='Charge Chronique (28 jours)', color='red')
-# plt.title('Évolution des Charges Aiguë et Chronique')
-# plt.xlabel('Date')
-# plt.ylabel('Charge d\'effort')
-# plt.legend()
-# plt.xticks(rotation=45)
-# plt.tight_layout()
-# plt.show()
-
 # Calcul du ratio Charge Aiguë / Charge Chronique (ACWR)
 df_full['Ratio_AC'] = df_full['Charge_aigue'] / df_full['Charge_chronique']
 
-# Visualisation du ratio
-# plt.figure(figsize=(15, 6))
-# plt.plot(df_full['date'], df_full['Ratio_AC'], label='ACWR', color='green')
-# plt.title('Évolution du Ratio Charge Aiguë / Charge Chronique = ACWR')
-# plt.xlabel('Date')
-# plt.ylabel('Ratio')
-# plt.axhline(y=1.5, color='r', linestyle='--', label='Limite ACWR (1.5)')
-# plt.axhline(y=0.8, color='b', linestyle='--', label='Limite ACWR (0.8)')
-# plt.legend()
-# plt.xticks(rotation=45)
-# plt.tight_layout()
-# plt.show()
 
+#######################################
+####### Calcul des courbes ############
+#######################################
 
 def etrimp(HR_ex, HR_repos, HR_MAX, temps, sexe):
     alpha = 0
@@ -121,93 +107,74 @@ def etrimp(HR_ex, HR_repos, HR_MAX, temps, sexe):
     delta = (HR_ex-HR_repos)/(HR_MAX-HR_repos)
     return temps*delta*alpha*np.exp(beta*delta)
 
-def performance(performance_pre, effort):
-    K = 2.0
-    tau = 50
-    tau_prime = 5
-    tau_tier = 15
-    perfo_post = performance_pre + (np.exp(-1/tau) - np.exp(-1/tau_prime) - K*np.exp(-1/tau_tier)) * effort
-    return perfo_post
-
 def fatigue(fatigue_pre, effort):
     tau = 15
     fatigue_post = (effort + np.exp(-1/tau)*fatigue_pre) 
     return fatigue_post
 
 def fitness(fitness_pre, effort):
-    tau = 50
-    tau_prime = 50
+    tau = 45
+    tau_prime = 5
     fitness_post = effort + (np.exp(-1/tau)) * fitness_pre
     return fitness_post
 
+window_size = 200
 courbe_fatigue = [0]
 courbe_fitness = [0]
 courbe_performance = [0]
-window_size = 200
+courbe_forme = [0]
+
 
 for i in range(len(df_full) - 1):
     effort = df_full.iloc[i + 1]["relative_effort"]
     instant_fatigue = fatigue(courbe_fatigue[-1], effort)
     instant_fitness = fitness(courbe_fitness[-1], effort)
-    instant_fitness = np.convolve()
-    instant_performance = performance(courbe_performance[-1], effort)
+    instant_performance = (instant_fitness - instant_fatigue)/2
+    instant_forme = instant_fitness - 2*instant_fatigue
+    
+
     courbe_fatigue.append(instant_fatigue)
     courbe_fitness.append(instant_fitness)
     courbe_performance.append(instant_performance)
+    courbe_forme.append(instant_forme)
     if len(courbe_fatigue) > window_size:
         courbe_fatigue.pop(0)
         courbe_fitness.pop(0)
         courbe_performance.pop(0)
+        courbe_forme.pop(0)
 
 
-# temps = np.arange(len(courbe_fatigue))  # Index pour la fenêtre glissante
-
-# plt.figure(figsize=(12, 6))
-
-# #Tracer la courbe de fatigue
-# plt.plot(temps, courbe_fatigue, label="Fatigue", color="red", linewidth=2)
-
-# #Tracer la courbe de fitness
-# plt.plot(temps, courbe_fitness, label="Fitness", color="green", linewidth=2)
-
-# # Ajouter des options graphiques
-# plt.xlabel("Temps (fenêtre glissante)")
-# plt.ylabel("Valeurs")
-# plt.title("Évolution de la Fatigue et de la Fitness")
-# plt.legend()
-# plt.grid()
-# plt.show()
-# courbe = [0]
-# temps = []
-# effort = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0 , 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 , 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-# for i in range(len(effort)):
-#     instant_fitness = fitness(courbe[-1], effort[i])
-#     courbe.append(instant_fitness)
-#     temps.append(i)
+temps = np.arange(len(courbe_fatigue))  # Index pour la fenêtre glissante
 
 
-# plt.plot(courbe)
-# plt.show()
-# Initialisation des courbes
-# courbe_fatigue = [0]
-# courbe_fitness = [0]
-# temps = []
-# effort = [1] + [0] * 99  # Impulsion initiale
 
-# # Calcul des réponses
-# for i in range(len(effort)):
-#     fatigue_val = fatigue(courbe_fatigue[-1], effort[i])
-#     fitness_val = fitness(courbe_fitness[-1], effort[i])
-#     courbe_fatigue.append(fatigue_val)
-#     courbe_fitness.append(fitness_val)
-#     temps.append(i)
+def graphique():
+    # Créer les sous-graphiques
+    fig, axs = plt.subplots(2, 1, figsize=(10, 5))  # 2 lignes, 1 colonne
 
-# # Tracé des courbes
-# plt.plot(temps, courbe_fatigue[1:], label="Fatigue", color="red")
-# plt.plot(temps, courbe_fitness[1:], label="Fitness", color="blue")
-# plt.xlabel("Temps")
-# plt.ylabel("Valeur")
-# plt.title("Comparaison des réponses impulsionnelles : Fatigue vs Fitness")
-# plt.legend()
-# plt.grid()
-# plt.show()
+    # ---- Premier graphique : ACWR ----
+    axs[0].plot(df_full['date'], df_full['Ratio_AC'], label='ACWR', color='green')
+    axs[0].axhline(y=1.5, color='r', linestyle='--', label='Limite ACWR (1.5)')
+    axs[0].axhline(y=0.8, color='b', linestyle='--', label='Limite ACWR (0.8)')
+    axs[0].set_title('Évolution du Ratio Charge Aiguë / Charge Chronique = ACWR')
+    axs[0].set_xlabel('Date')
+    axs[0].set_ylabel('Ratio')
+    axs[0].legend()
+    axs[0].grid()
+    axs[0].tick_params(axis='x', rotation=45)
+
+    # ---- Deuxième graphique : Fatigue, Fitness, Performance ----
+    axs[1].plot(temps, courbe_fatigue, label="Fatigue", color="red", linewidth=2)
+    axs[1].plot(temps, courbe_forme, label="Forme", color="green", linewidth=2)
+    axs[1].plot(temps, courbe_performance, label="Performance", color="blue", linewidth=2)
+    axs[1].set_title("Évolution de la Fatigue, de la Forme et de la Performance")
+    axs[1].set_xlabel("Temps (fenêtre glissante)")
+    axs[1].set_ylabel("Valeurs")
+    axs[1].legend()
+    axs[1].grid()
+
+    # Ajuster l'espacement entre les sous-graphiques
+    plt.tight_layout()
+
+    # Afficher les deux graphiques
+    plt.show()
