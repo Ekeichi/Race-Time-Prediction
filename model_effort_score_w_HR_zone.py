@@ -118,11 +118,12 @@ def fitness(fitness_pre, effort):
     fitness_post = effort + (np.exp(-1/tau)) * fitness_pre
     return fitness_post
 
-window_size = 200
+window_size = 100
 courbe_fatigue = [0]
 courbe_fitness = [0]
 courbe_performance = [0]
 courbe_forme = [0]
+courbe_rapport = [0]
 
 
 for i in range(len(df_full) - 1):
@@ -131,17 +132,22 @@ for i in range(len(df_full) - 1):
     instant_fitness = fitness(courbe_fitness[-1], effort)
     instant_performance = (instant_fitness - instant_fatigue)/2
     instant_forme = instant_fitness - 2*instant_fatigue
-    
+    if instant_performance >= 0:
+        rapport = (instant_fatigue/instant_performance)*100
+    else:
+        rapport = 150
 
     courbe_fatigue.append(instant_fatigue)
     courbe_fitness.append(instant_fitness)
     courbe_performance.append(instant_performance)
     courbe_forme.append(instant_forme)
+    courbe_rapport.append(rapport)
     if len(courbe_fatigue) > window_size:
         courbe_fatigue.pop(0)
         courbe_fitness.pop(0)
         courbe_performance.pop(0)
         courbe_forme.pop(0)
+        courbe_rapport.pop(0)
 
 
 temps = np.arange(len(courbe_fatigue))  # Index pour la fenêtre glissante
@@ -178,3 +184,38 @@ def graphique():
 
     # Afficher les deux graphiques
     plt.show()
+
+
+graphique()
+
+derniere_valeur = courbe_rapport[-1]  # Récupération de la dernière valeur
+
+if derniere_valeur < 50:
+    print("Decreasing")
+if derniere_valeur < 80:
+    print("Resuming/Performance")
+if derniere_valeur < 100:
+    print("Maintaining")
+if derniere_valeur < 150:
+    print("Optimized")
+if derniere_valeur >= 150:
+    print("Excessive")
+
+
+# Création de la courbe
+plt.plot(temps, courbe_rapport)
+plt.axhspan(150, 200, color='red', alpha=0.2, label="Excessive")
+plt.axhspan(100, 150, color='orange', alpha=0.2, label="Optimized")
+plt.axhspan(80, 100, color='yellow', alpha=0.2, label="Maintaining")
+plt.axhspan(50, 80, color='green', alpha=0.2, label="Performance")
+plt.axhspan(0, 50, color='blue', alpha=0.2, label="Decreasing")
+
+# Ajout de titres et légendes
+plt.title("Rapport entre la fatigue et la performance sur 100 jours")
+plt.xlabel("Jours")
+plt.ylabel("Rapport fatigue performance (en %)")
+plt.legend()
+
+# Affichage
+plt.show()
+
