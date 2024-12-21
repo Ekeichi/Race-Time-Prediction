@@ -7,4 +7,6 @@ L'objectif ici est de rassembler une boîte à outils servant à aider l'utilisa
 
   L'objectif globale de cette démarche et de permettre à chaque athlète, novice ou expert, de s'appuyer sur des données interpretable facilement. Le ressenti ne sera pas le seul indicateur d'un état de fatigue ou de fraicheur. 
 
-![Figure_1](https://github.com/user-attachments/assets/3544116c-0169-47fa-bc62-42e575c8a632)
+
+![Figure_1](https://github.com/user-attachments/assets/7b4c506e-9f14-49c2-beec-d5d6f2d0a82e)
+![Figure_2](https://github.com/user-attachments/assets/20940dbe-f6b3-4f3a-b46b-03561ca4bf9c)
