@@ -152,7 +152,9 @@ for i in range(len(df_full) - 1):
 
 temps = np.arange(len(courbe_fatigue))  # Index pour la fenêtre glissante
 
-
+#######################################
+####### Affichage des courbes #########
+#######################################
 
 def graphique():
     # Créer les sous-graphiques
