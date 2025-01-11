@@ -1,19 +1,10 @@
-from calculAllure import calcul_allure
-
-user_data = {
-    "FCmax" : 194,
-    "VO2max" : 60,
-    "experience" : "Intermédiaire"
-}
-
 import matplotlib.pyplot as plt
 
 # Paramètres pour le profil de charge
 semaines_totales = 12
-volume_initial = 30  # Volume de départ en km
+volume_initial = 20  # Volume de départ en km
 intensite_moyenne = 6  # Intensité sur une échelle RPE (1-10)
-progression = 0.12  # Augmentation de 10 % par semaine
-recuperation = 0.2  # Réduction de 50 % pour les semaines de récupération
+progression = 0.12  # Augmentation de 12 % par semaine
 tapering_start = 10  # Affûtage à partir de la semaine 10
 
 # Calcul de la charge hebdomadaire
@@ -22,14 +13,14 @@ volume_actuel = volume_initial
 
 for semaine in range(1, semaines_totales + 1):
     if semaine >= tapering_start:
-        # Affûtage : réduction graduelle du volume (20 % par semaine)
-        volume_actuel *= 0.8
+        # Affûtage : réduction graduelle du volume (15 % par semaine)
+        volume_actuel *= 0.85
     elif semaine / 4 == 1:
-        # Semaine de récupération : réduction de 50 % du volume
-       volume_actuel *= 0.85  # Réduction de 30 % au lieu de 50 %
+        # Semaine de récupération 1 : réduction de 25 % du volume
+       volume_actuel *= 0.85  
     elif semaine / 8 == 1:
-        # Semaine de récupération : réduction de 50 % du volume
-       volume_actuel *= 0.9  # Réduction de 30 % au lieu de 50 %
+        # Semaine de récupération 2 : réduction de 10 % du volume
+       volume_actuel *= 0.9
     else:
         # Progression normale
         volume_actuel *= (1 + progression)
