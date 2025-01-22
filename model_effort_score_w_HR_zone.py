@@ -10,7 +10,7 @@ from datetime import datetime as dt
 
 
 
-data = pd.read_csv('activities_with_details.csv')
+data = pd.read_csv('data/activities_with_details.csv')
 date = data['start_date_local']
 data = data.drop(columns=['activity_id', 'start_date_local', 'suffer_score'])
 data = data.dropna()
@@ -89,23 +89,6 @@ df_full['Ratio_AC'] = df_full['Charge_aigue'] / df_full['Charge_chronique']
 #######################################
 ####### Calcul des courbes ############
 #######################################
-
-def etrimp(HR_ex, HR_repos, HR_MAX, temps, sexe):
-    alpha = 0
-    beta = 0
-    if sexe == 'H':
-        alpha = 0.64
-        beta = 1.92
-    elif sexe == 'F':
-        alpha = 0.64
-        beta = 1.92
-    else:
-        alpha = 0.64
-        beta = 1.92
-        print("Mauvais sexe, Homme par défaut.")
-    
-    delta = (HR_ex-HR_repos)/(HR_MAX-HR_repos)
-    return temps*delta*alpha*np.exp(beta*delta)
 
 def fatigue(fatigue_pre, effort):
     tau = 15
