@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeakFlow - Analyse de données d'entraînement</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .header {
+            margin-bottom: 30px;
+        }
+        .upload-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+        .period-selector {
+            margin-bottom: 20px;
+        }
+        .chart-container {
+            margin-bottom: 30px;
+        }
+        .chart-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .legend-item {
+            display: inline-block;
+            margin-right: 15px;
+        }
+        .color-box {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>PeakFlow - Analyse de données d'entraînement</h1>
+        {% if activities %}
+        <div>
+            <span class="badge bg-secondary">{{ activities|length }} activités</span>
+            <a href="/download" class="btn btn-sm btn-outline-secondary ms-2">Télécharger CSV</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Upload Section -->
+    <div class="upload-section">
+        <h3>Importer des données</h3>
+        <form action="/" method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="file" class="form-label">Sélectionner un fichier CSV d'activités</label>
+                <input type="file" class="form-control" id="file" name="file" accept=".csv" required>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Télécharger et analyser</button>
+        </form>
+        
+        {% if upload_success is not none %}
+            {% if upload_success %}
+                <div class="alert alert-success mt-3">Fichier téléchargé avec succès!</div>
+            {% else %}
+                <div class="alert alert-danger mt-3">{{ error_message }}</div>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    {% if activities %}
+    <!-- Period Selector -->
+    <div class="period-selector">
+        <h3>Tableau de bord</h3>
+        <div class="btn-group" role="group">
+            <a href="{{ url_for('dashboard', period='7d') }}" class="btn btn-sm btn-outline-primary">7j</a>
+            <a href="{{ url_for('dashboard', period='1m') }}" class="btn btn-sm btn-outline-primary">1m</a>
+            <a href="{{ url_for('dashboard', period='3m') }}" class="btn btn-sm btn-outline-primary">3m</a>
+            <a href="{{ url_for('dashboard', period='6m') }}" class="btn btn-sm btn-outline-primary">6m</a>
+            <a href="{{ url_for('dashboard', period='1y') }}" class="btn btn-sm btn-outline-primary">1a</a>
+            <a href="{{ url_for('dashboard', period='all') }}" class="btn btn-sm btn-outline-primary">Tout</a>
+        </div>
+    </div>
+
+    <!-- Recent Activities -->
+    <div class="chart-title">Activités Récentes</div>
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Distance</th>
+                    <th>Durée</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for activity in activities[:7] %}
+                <tr>
+                    <td>{{ activity.start_date_local.split('T')[0] }}</td>
+                    <td>{{ activity.type }}</td>
+                    <td>{{ "%.1f"|format(activity.distance|float) }} km</td>
+                    <td>{{ activity.moving_time }}</td>
+                    <td>{{ activity.suffer_score }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <h4>Commencer l'analyse</h4>
+        <p>Téléchargez un fichier CSV contenant vos données d'activité pour commencer l'analyse.</p>
+        <p>Le fichier doit contenir des colonnes pour la date, le type d'activité, la distance, la durée et les zones cardiaques.</p>
+    </div>
+    {% endif %}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
